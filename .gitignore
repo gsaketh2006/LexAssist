@@ -1,0 +1,16 @@
+# Python cache
+__pycache__/
+*.pyc
+
+# Environment & secrets
+.env
+
+# Virtual environments
+myenv/
+RAG/myenv/
+
+# FAISS indexes (optional – include only if you want)
+# RAG/legal_faiss_db/
+
+# Allow dependencies file
+!requirements.txt
