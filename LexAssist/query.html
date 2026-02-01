@@ -1,0 +1,1127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StartupLex - AI Legal Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;600;700&family=Jost:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --teal: #1B7F6D;
+            --teal-dark: #155A4E;
+            --light-bg: #F5F5F5;
+            --white: #FFFFFF;
+            --text-primary: #2C3E50;
+            --text-secondary: #6C757D;
+            --border: #E0E0E0;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Jost', sans-serif;
+            background: var(--light-bg);
+            height: 100vh;
+            display: flex;
+            overflow: hidden;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--white);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            box-shadow: 2px 0 10px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .sidebar.hidden {
+            transform: translateX(-100%);
+        }
+
+        .sidebar-header {
+            padding: 2rem 1.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            letter-spacing: 0.5px;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .logo::before {
+            content: '⚖';
+            font-size: 1.5rem;
+            color: var(--teal);
+        }
+
+        .logo span {
+            background: linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .new-chat-btn {
+            width: 100%;
+            padding: 0.9rem 1.2rem;
+            background: var(--teal);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            letter-spacing: 0.3px;
+        }
+
+        .new-chat-btn:hover {
+            background: var(--teal-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(27, 127, 109, 0.25);
+        }
+
+        .history-section {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1.5rem;
+        }
+
+        .history-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1.5px;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+
+        .history-list {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .history-item {
+            padding: 0.9rem 1rem;
+            background: var(--light-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .history-item:hover {
+            background: #E8F5F3;
+            border-color: var(--teal);
+        }
+
+        .history-item.active {
+            background: var(--teal);
+            border-color: var(--teal);
+        }
+
+        .history-item.active .history-item-title,
+        .history-item.active .history-item-time {
+            color: var(--white);
+        }
+
+        .history-item-title {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .history-item-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .sidebar-footer {
+            padding: 1.5rem;
+            border-top: 1px solid var(--border);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: var(--teal);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: var(--white);
+            font-size: 0.9rem;
+        }
+
+        .user-details {
+            flex: 1;
+        }
+
+        .user-name {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .user-email {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .logout-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.3rem;
+            font-size: 1.2rem;
+            transition: color 0.3s;
+        }
+
+        .logout-btn:hover {
+            color: var(--teal);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            background: var(--white);
+        }
+
+        /* Header */
+        .header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 1.5rem;
+            background: var(--white);
+        }
+
+        .menu-toggle {
+            display: none;
+            width: 40px;
+            height: 40px;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            cursor: pointer;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            transition: all 0.3s;
+        }
+
+        .menu-toggle:hover {
+            background: var(--light-bg);
+            border-color: var(--teal);
+        }
+
+        .header-title {
+            flex: 1;
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .header-btn {
+            padding: 0.7rem 1.5rem;
+            background: transparent;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-primary);
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 500;
+        }
+
+        .header-btn:hover {
+            background: var(--light-bg);
+            border-color: var(--teal);
+            color: var(--teal);
+        }
+
+        /* Chat Container */
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 2rem;
+            background: var(--light-bg);
+        }
+
+        .chat-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        /* Welcome Screen */
+        .welcome-screen {
+            text-align: center;
+            padding: 4rem 2rem;
+            animation: fadeIn 0.6s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .welcome-icon {
+            font-size: 4rem;
+            margin-bottom: 2rem;
+        }
+
+        .welcome-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.5rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 1rem;
+        }
+
+        .welcome-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            margin-bottom: 3rem;
+            line-height: 1.7;
+        }
+
+        .suggestion-chips {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1rem;
+            margin-top: 2rem;
+        }
+
+        .chip {
+            background: var(--white);
+            border: 1px solid var(--border);
+            padding: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-align: left;
+        }
+
+        .chip:hover {
+            border-color: var(--teal);
+            box-shadow: 0 4px 12px rgba(27, 127, 109, 0.15);
+            transform: translateY(-2px);
+        }
+
+        .chip-icon {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            display: block;
+        }
+
+        .chip-text {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            line-height: 1.5;
+        }
+
+        /* Messages */
+        .message {
+            margin-bottom: 2rem;
+            animation: slideUp 0.5s ease;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message-container {
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .message-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            flex-shrink: 0;
+        }
+
+        .user-message .message-avatar {
+            background: var(--teal);
+            color: var(--white);
+        }
+
+        .ai-message .message-avatar {
+            background: #E8F5F3;
+        }
+
+        .message-content-wrapper {
+            flex: 1;
+        }
+
+        .message-header {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .message-name {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .message-time {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .message-content {
+            padding: 1.2rem 1.5rem;
+            border-radius: 12px;
+            line-height: 1.8;
+            font-size: 0.95rem;
+        }
+
+        .user-message .message-content {
+            background: var(--white);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .ai-message .message-content {
+            background: var(--white);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+        }
+
+        .ai-message .message-content h4 {
+            color: var(--teal);
+            margin-top: 1.2rem;
+            margin-bottom: 0.8rem;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .ai-message .message-content ul,
+        .ai-message .message-content ol {
+            margin-left: 1.5rem;
+            margin-top: 0.8rem;
+            margin-bottom: 0.8rem;
+        }
+
+        .ai-message .message-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .ai-message .message-content strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+
+        .ai-message .message-content p {
+            margin-bottom: 1rem;
+        }
+
+        .ai-message .message-content p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Disclaimer */
+        .disclaimer {
+            background: #FFF9E6;
+            border-left: 3px solid #FFC107;
+            padding: 1rem 1.2rem;
+            margin-top: 1.2rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            color: #856404;
+            line-height: 1.6;
+        }
+
+        .disclaimer strong {
+            font-weight: 600;
+            color: #664300;
+        }
+
+        /* Loading Message */
+        .loading-message {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1.2rem 1.5rem;
+            background: var(--white);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+        }
+
+        .loading-dots {
+            display: flex;
+            gap: 0.4rem;
+        }
+
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--teal);
+            border-radius: 50%;
+            animation: bounce 1.4s infinite ease-in-out;
+        }
+
+        .loading-dot:nth-child(1) { animation-delay: -0.32s; }
+        .loading-dot:nth-child(2) { animation-delay: -0.16s; }
+
+        @keyframes bounce {
+            0%, 80%, 100% { transform: scale(0); }
+            40% { transform: scale(1); }
+        }
+
+        .loading-text {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+
+        /* Input Container */
+        .input-container {
+            padding: 1.5rem 2rem;
+            background: var(--white);
+            border-top: 1px solid var(--border);
+        }
+
+        .input-wrapper {
+            max-width: 900px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        .chat-input {
+            width: 100%;
+            padding: 1.2rem 4.5rem 1.2rem 1.5rem;
+            background: var(--white);
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            color: var(--text-primary);
+            font-size: 1rem;
+            font-family: 'Jost', sans-serif;
+            resize: none;
+            outline: none;
+            transition: all 0.3s;
+            max-height: 200px;
+            line-height: 1.5;
+        }
+
+        .chat-input:focus {
+            border-color: var(--teal);
+            box-shadow: 0 0 0 3px rgba(27, 127, 109, 0.1);
+        }
+
+        .chat-input::placeholder {
+            color: #B0B0B0;
+        }
+
+        .send-button {
+            position: absolute;
+            right: 0.8rem;
+            bottom: 0.8rem;
+            width: 42px;
+            height: 42px;
+            background: var(--teal);
+            border: none;
+            border-radius: 10px;
+            color: var(--white);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+        }
+
+        .send-button:hover:not(:disabled) {
+            background: var(--teal-dark);
+            transform: scale(1.05);
+        }
+
+        .send-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .input-hint {
+            margin-top: 0.8rem;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        /* Scrollbar */
+        .chat-container::-webkit-scrollbar,
+        .history-section::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track,
+        .history-section::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb,
+        .history-section::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover,
+        .history-section::-webkit-scrollbar-thumb:hover {
+            background: var(--teal);
+        }
+
+        /* Responsive */
+        @media (max-width: 1024px) {
+            .sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                height: 100%;
+                z-index: 1000;
+                box-shadow: 2px 0 20px rgba(0, 0, 0, 0.1);
+            }
+
+            .menu-toggle {
+                display: flex;
+            }
+
+            .header-title {
+                font-size: 1.5rem;
+            }
+
+            .suggestion-chips {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                padding: 1rem 1.5rem;
+            }
+
+            .header-title {
+                font-size: 1.3rem;
+            }
+
+            .header-btn {
+                display: none;
+            }
+
+            .chat-container {
+                padding: 1.5rem 1rem;
+            }
+
+            .input-container {
+                padding: 1rem;
+            }
+
+            .welcome-title {
+                font-size: 2rem;
+            }
+
+            .message-container {
+                flex-direction: column;
+                gap: 0.5rem;
+            }
+        }
+
+        /* Empty state */
+        .empty-history {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">Startup<span>Lex</span></div>
+            <button class="new-chat-btn" onclick="startNewChat()">
+                ✨ New Chat
+            </button>
+        </div>
+
+        <div class="history-section">
+            <div class="history-label">Recent Conversations</div>
+            <div class="history-list" id="historyList">
+                <!-- History items will be added here -->
+            </div>
+        </div>
+
+        <div class="sidebar-footer">
+            <div class="user-info">
+                <div class="user-avatar">U</div>
+                <div class="user-details">
+                    <div class="user-name">User</div>
+                    <div class="user-email" id="userEmail">user@example.com</div>
+                </div>
+                <button class="logout-btn" onclick="logout()" title="Logout">🚪</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="header">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <h1 class="header-title">Legal Assistant</h1>
+            <a href="index.html" class="header-btn">
+                ← Back to Home
+            </a>
+        </header>
+
+        <!-- Chat Container -->
+        <div class="chat-container" id="chatContainer">
+            <div class="chat-wrapper">
+                <!-- Welcome Screen -->
+                <div class="welcome-screen" id="welcomeScreen">
+                    <div class="welcome-icon">⚖️</div>
+                    <h2 class="welcome-title">How can I help with your legal questions today?</h2>
+                    <p class="welcome-subtitle">Get instant, Legal guidance tailored for your startup. Ask about compliance, contracts, incorporation, or IP protection.</p>
+                    
+                    <div class="suggestion-chips">
+                        <div class="chip" onclick="selectSuggestion('What legal documents do I need to incorporate a startup in Delaware?')">
+                            <span class="chip-icon">📋</span>
+                            <div class="chip-text">What documents do I need to incorporate a startup?</div>
+                        </div>
+                        <div class="chip" onclick="selectSuggestion('How do I create a founder vesting schedule with a 1-year cliff?')">
+                            <span class="chip-icon">💼</span>
+                            <div class="chip-text">How do I create a founder vesting schedule?</div>
+                        </div>
+                        <div class="chip" onclick="selectSuggestion('What are the GDPR compliance requirements for SaaS startups?')">
+                            <span class="chip-icon">🔒</span>
+                            <div class="chip-text">What are GDPR compliance requirements?</div>
+                        </div>
+                        <div class="chip" onclick="selectSuggestion('How should I structure equity compensation for early employees?')">
+                            <span class="chip-icon">📊</span>
+                            <div class="chip-text">How should I structure equity compensation?</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Messages Container -->
+                <div id="messagesContainer">
+                    <!-- Messages will be added here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Input Container -->
+        <div class="input-container">
+            <div class="input-wrapper">
+                <textarea 
+                    id="chatInput" 
+                    class="chat-input" 
+                    placeholder="Ask your legal question..."
+                    rows="1"
+                ></textarea>
+                <button class="send-button" id="sendButton" onclick="sendMessage()">
+                    ↑
+                </button>
+                <div class="input-hint">Press Enter to send, Shift+Enter for new line</div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Backend API URL
+        const API_BASE_URL = 'http://localhost:5000';
+
+        // State management
+        let currentChatId = null;
+        let conversations = [];
+        let currentMessages = [];
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConversations();
+            loadUserEmail();
+            setupInputAutoResize();
+        });
+
+        // Load user email
+        function loadUserEmail() {
+            const email = localStorage.getItem('startuplex_user_email') || 'user@example.com';
+            document.getElementById('userEmail').textContent = email;
+        }
+
+        // Load conversations
+        function loadConversations() {
+            const saved = localStorage.getItem('startuplex_conversations');
+            if (saved) {
+                conversations = JSON.parse(saved);
+                renderHistory();
+            } else {
+                document.getElementById('historyList').innerHTML = '<div class="empty-history">No conversations yet</div>';
+            }
+        }
+
+        // Save conversations
+        function saveConversations() {
+            localStorage.setItem('startuplex_conversations', JSON.stringify(conversations));
+        }
+
+        // Render history
+        function renderHistory() {
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+
+            if (conversations.length === 0) {
+                historyList.innerHTML = '<div class="empty-history">No conversations yet</div>';
+                return;
+            }
+
+            conversations.forEach(conv => {
+                const item = document.createElement('div');
+                item.className = 'history-item' + (conv.id === currentChatId ? ' active' : '');
+                item.onclick = () => loadConversation(conv.id);
+                
+                const title = conv.messages[0]?.content.substring(0, 40) + (conv.messages[0]?.content.length > 40 ? '...' : '') || 'New Chat';
+                const time = new Date(conv.timestamp).toLocaleDateString('en-US', { 
+                    month: 'short', 
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+                
+                item.innerHTML = `
+                    <div class="history-item-title">${title}</div>
+                    <div class="history-item-time">${time}</div>
+                `;
+                historyList.appendChild(item);
+            });
+        }
+
+        // Start new chat
+        function startNewChat() {
+            currentChatId = Date.now().toString();
+            currentMessages = [];
+            
+            document.getElementById('welcomeScreen').style.display = 'block';
+            document.getElementById('messagesContainer').innerHTML = '';
+            
+            conversations.unshift({
+                id: currentChatId,
+                timestamp: Date.now(),
+                messages: []
+            });
+            
+            saveConversations();
+            renderHistory();
+        }
+
+        // Load conversation
+        function loadConversation(chatId) {
+            const conv = conversations.find(c => c.id === chatId);
+            if (!conv) return;
+
+            currentChatId = chatId;
+            currentMessages = conv.messages;
+
+            document.getElementById('welcomeScreen').style.display = 'none';
+
+            const container = document.getElementById('messagesContainer');
+            container.innerHTML = '';
+            
+            currentMessages.forEach(msg => {
+                appendMessage(msg.type, msg.content, msg.timestamp, false);
+            });
+
+            renderHistory();
+            scrollToBottom();
+        }
+
+        // Select suggestion
+        function selectSuggestion(text) {
+            document.getElementById('chatInput').value = text;
+            sendMessage();
+        }
+
+        // Send message
+        async function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const message = input.value.trim();
+            
+            if (!message) return;
+
+            document.getElementById('welcomeScreen').style.display = 'none';
+
+            if (!currentChatId) {
+                currentChatId = Date.now().toString();
+                conversations.unshift({
+                    id: currentChatId,
+                    timestamp: Date.now(),
+                    messages: []
+                });
+            }
+
+            const userMsg = {
+                type: 'user',
+                content: message,
+                timestamp: Date.now()
+            };
+            currentMessages.push(userMsg);
+            appendMessage('user', message, userMsg.timestamp);
+
+            updateCurrentConversation();
+
+            input.value = '';
+            input.style.height = 'auto';
+
+            document.getElementById('sendButton').disabled = true;
+
+            showLoading();
+
+            try {
+                const response = await getAIResponse(message);
+                
+                removeLoading();
+
+                const aiMsg = {
+                    type: 'ai',
+                    content: response,
+                    timestamp: Date.now()
+                };
+                currentMessages.push(aiMsg);
+                appendMessage('ai', response, aiMsg.timestamp);
+
+                updateCurrentConversation();
+
+            } catch (error) {
+                removeLoading();
+                appendMessage('ai', `Error: ${error.message}. Please make sure the backend server is running.`, Date.now());
+            } finally {
+                document.getElementById('sendButton').disabled = false;
+            }
+        }
+
+        // Update conversation
+        function updateCurrentConversation() {
+            const conv = conversations.find(c => c.id === currentChatId);
+            if (conv) {
+                conv.messages = currentMessages;
+                conv.timestamp = Date.now();
+                saveConversations();
+                renderHistory();
+            }
+        }
+
+        // Append message
+        function appendMessage(type, content, timestamp, animate = true) {
+            const container = document.getElementById('messagesContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${type}-message`;
+            if (animate) {
+                messageDiv.style.animation = 'slideUp 0.5s ease';
+            }
+
+            const time = new Date(timestamp).toLocaleTimeString('en-US', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+            const name = type === 'user' ? 'You' : 'StartupLex AI';
+            const avatar = type === 'user' ? '👤' : '⚖️';
+
+            let formattedContent = content;
+            if (type === 'ai') {
+                formattedContent = formatAIResponse(content);
+            } else {
+                formattedContent = `<p>${content}</p>`;
+            }
+
+            messageDiv.innerHTML = `
+                <div class="message-container">
+                    <div class="message-avatar">${avatar}</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-header">
+                            <span class="message-name">${name}</span>
+                            <span class="message-time">${time}</span>
+                        </div>
+                        <div class="message-content">
+                            ${formattedContent}
+                            ${type === 'ai' ? `
+                                <div class="disclaimer">
+                                    <strong>⚠️ Legal Disclaimer:</strong> This information is for educational purposes only and does not constitute legal advice. Please consult with a licensed attorney for specific legal matters.
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.appendChild(messageDiv);
+            scrollToBottom();
+        }
+
+        // Show loading
+        function showLoading() {
+            const container = document.getElementById('messagesContainer');
+            const loadingDiv = document.createElement('div');
+            loadingDiv.className = 'message ai-message';
+            loadingDiv.id = 'loadingMessage';
+            loadingDiv.innerHTML = `
+                <div class="message-container">
+                    <div class="message-avatar">⚖️</div>
+                    <div class="message-content-wrapper">
+                        <div class="message-header">
+                            <span class="message-name">StartupLex AI</span>
+                            <span class="message-time">Now</span>
+                        </div>
+                        <div class="loading-message">
+                            <div class="loading-dots">
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                                <div class="loading-dot"></div>
+                            </div>
+                            <span class="loading-text">Analyzing your question...</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            container.appendChild(loadingDiv);
+            scrollToBottom();
+        }
+
+        // Remove loading
+        function removeLoading() {
+            const loading = document.getElementById('loadingMessage');
+            if (loading) loading.remove();
+        }
+
+        // Get AI response
+        async function getAIResponse(query) {
+            const response = await fetch(`${API_BASE_URL}/api/query`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    question: query,
+                    context: ''
+                })
+            });
+
+            if (!response.ok) {
+                throw new Error(`API Error: ${response.status}`);
+            }
+
+            const data = await response.json();
+            return data.answer || 'No response received from the API.';
+        }
+
+        // Format AI response
+        function formatAIResponse(text) {
+            let formatted = text;
+            
+            const paragraphs = formatted.split(/\n\n+/);
+            formatted = paragraphs.map(p => {
+                p = p.trim();
+                if (!p) return '';
+                
+                if (p.match(/^\d+\./m) || p.match(/^[-•]/m)) {
+                    const items = p.split(/\n(?=\d+\.|-|•)/);
+                    return '<ul>' + items.map(item => `<li>${item.replace(/^(\d+\.|-|•)\s*/, '')}</li>`).join('') + '</ul>';
+                }
+                
+                if (p.match(/^[A-Z][^.!?]*:$/)) {
+                    return `<h4>${p.replace(/:$/, '')}</h4>`;
+                }
+                
+                return `<p>${p}</p>`;
+            }).join('');
+            
+            return formatted || '<p>No response available.</p>';
+        }
+
+        // Auto-resize textarea
+        function setupInputAutoResize() {
+            const input = document.getElementById('chatInput');
+            input.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            });
+
+            input.addEventListener('keydown', function(e) {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    sendMessage();
+                }
+            });
+        }
+
+        // Scroll to bottom
+        function scrollToBottom() {
+            const container = document.getElementById('chatContainer');
+            setTimeout(() => {
+                container.scrollTop = container.scrollHeight;
+            }, 100);
+        }
+
+        // Toggle sidebar
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('hidden');
+        }
+
+        // Logout
+        function logout() {
+            if (confirm('Are you sure you want to logout?')) {
+                localStorage.removeItem('startuplex_user_email');
+                window.location.href = 'index.html';
+            }
+        }
+    </script>
+</body>
+</html>
